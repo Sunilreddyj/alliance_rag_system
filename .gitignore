@@ -1,0 +1,19 @@
+# Virtual environment
+.venv/
+
+# Environment variables (API keys)
+.env
+
+# Python cache files
+__pycache__/
+*.pyc
+
+# ChromaDB vector database
+chroma_multi_store/
+
+# VS Code settings
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db

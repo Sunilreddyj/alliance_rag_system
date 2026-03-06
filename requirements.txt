@@ -1,0 +1,16 @@
+chromadb
+sentence-transformers
+langchain
+langchain-text-splitters
+crewai
+beautifulsoup4
+requests
+pymupdf
+pandas
+ragas
+datasets
+langchain-openai
+langchain-community
+langchain-huggingface
+gradio
+python-dotenv
