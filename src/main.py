@@ -3,7 +3,7 @@ from rag_pipeline import run_query
 import gradio as gr
 
 # index local PDF
-store_local_pdf("data/BTECH 2026.pdf")
+store_local_pdf("data/policy.pdf")
 
 # index website pages
 base_url = "https://www.alliance.edu.in/admissions/courses-fee-structure"
