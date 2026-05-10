@@ -1,57 +1,53 @@
-from crewai import Agent, Task, Crew, LLM
-from crewai.tools import tool
+from openai import OpenAI
+from retrieval import search_all
+from config import LLM_MODEL, OPENAI_API_KEY
 
-from retrieval import search_pdf, search_website
-from config import LLM_MODEL
+client = OpenAI(api_key=OPENAI_API_KEY)
 
+SYSTEM_PROMPT = """You are a knowledgeable assistant. Answer the user's question using ONLY the provided context chunks.
 
-llm = LLM(
-    model=LLM_MODEL,
-    temperature=0.2
-)
-
-
-@tool("search_pdf_tool")
-def search_pdf_tool(query: str):
-    """Search the indexed PDF documents for relevant information."""
-    return search_pdf(query)
+Rules:
+- Be specific and detailed when the context supports it.
+- If multiple sources mention related info, synthesize them into a coherent answer.
+- If the context does not contain enough information to answer, say: "I don't have enough information in the uploaded documents to answer this question."
+- Do NOT fabricate facts. Only use what is in the context.
+- Format your answer clearly with paragraphs or bullet points where helpful."""
 
 
-@tool("search_website_tool")
-def search_website_tool(query: str):
-    """Search the indexed website pages for relevant information."""
-    return search_website(query)
+def build_context_string(results):
+    if not results:
+        return "No relevant context found."
 
+    parts = []
+    for i, item in enumerate(results, 1):
+        source = item.get("source", "Unknown")
+        text = item.get("text", "").strip()
+        parts.append(f"[Chunk {i} | Source: {source}]\n{text}")
 
-agent_router = Agent(
-    role="RAG Router",
-    goal="Choose correct data source and answer accurately",
-    backstory="Routes queries across PDFs and website",
-    tools=[search_pdf_tool, search_website_tool],
-    llm=llm
-)
+    return "\n\n---\n\n".join(parts)
 
 
 def run_query(query):
+    results = search_all(query, n_results=6)
+    context_str = build_context_string(results)
 
-    task = Task(
-    description=f"""
-User Question: {query}
+    user_message = f"""Context:
+{context_str}
 
-1 Choose correct source
-2 Retrieve information
-3 Answer clearly
-""",
-    expected_output="Clear answer in paragraph format based only on retrieved information.",
-    agent=agent_router
-)
+---
 
-    crew = Crew(
-        agents=[agent_router],
-        tasks=[task],
-        verbose=False
+Question: {query}
+
+Answer:"""
+
+    response = client.chat.completions.create(
+        model=LLM_MODEL,
+        messages=[
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user", "content": user_message}
+        ],
+        temperature=0.1,
+        max_tokens=1024
     )
 
-    result = crew.kickoff()
-
-    return result.raw
+    return response.choices[0].message.content.strip()

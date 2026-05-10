@@ -1,0 +1,58 @@
+# Render Blueprint — deploys backend (FastAPI) + frontend (React static)
+# Docs: https://render.com/docs/blueprint-spec
+
+services:
+  # ── Backend ──────────────────────────────────────────────────────────────
+  - type: web
+    name: alliance-rag-backend
+    runtime: python
+    plan: standard          # sentence-transformers needs ~1.5 GB RAM
+    region: oregon
+    buildCommand: pip install -r requirements.txt
+    startCommand: bash start.sh
+    healthCheckPath: /api/health
+
+    # Persistent disk keeps ChromaDB data across deploys / restarts
+    disk:
+      name: chroma-data
+      mountPath: /data
+      sizeGB: 2
+
+    envVars:
+      - key: OPENAI_API_KEY
+        sync: false         # set manually in Render dashboard
+
+      - key: SECRET_KEY
+        sync: false
+
+      - key: ADMIN_PASSWORD
+        sync: false
+
+      - key: ALLOWED_EMAILS
+        sync: false
+
+      # Point both paths to the mounted disk
+      - key: CHROMA_DB_PATH
+        value: /data/chroma_multi_store
+
+      - key: UPLOAD_DIR
+        value: /data/uploads
+
+  # ── Frontend ─────────────────────────────────────────────────────────────
+  - type: web
+    name: alliance-rag-frontend
+    runtime: static
+    buildCommand: cd frontend && npm install && npm run build
+    staticPublishPath: ./frontend/build
+
+    envVars:
+      # Set this to the EXACT URL of your backend service after it deploys
+      # e.g. https://alliance-rag-backend.onrender.com
+      - key: REACT_APP_API_URL
+        sync: false
+
+    routes:
+      # SPA fallback — all unknown paths serve index.html
+      - type: rewrite
+        source: /*
+        destination: /index.html

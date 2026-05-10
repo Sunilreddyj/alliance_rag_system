@@ -1,5 +1,13 @@
-# Virtual environment
+# Virtual environments
 .venv/
+venv/
+
+# Node modules
+frontend/node_modules/
+frontend/build/
+
+# Uploads (user files — don't commit)
+uploads/
 
 # Environment variables (API keys)
 .env

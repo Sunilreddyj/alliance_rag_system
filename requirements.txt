@@ -1,19 +1,31 @@
+# Core
+fastapi
+uvicorn[standard]
+python-multipart
+python-dotenv
+pydantic
+
+# Auth
+pyjwt
+
+# Vector DB & Embeddings
 chromadb
 sentence-transformers
-langchain
+
+# LLM
+openai
+
+# Text processing
 langchain-text-splitters
-crewai
+pymupdf
 beautifulsoup4
 requests
-pymupdf
+
+# Excel / CSV
+openpyxl
+xlrd
 pandas
-ragas
-datasets
-langchain-openai
-langchain-community
-langchain-huggingface
-gradio
-python-dotenv 
-cython
+
+# Build / compat
 pyyaml==6.0.1
 setuptools<70
