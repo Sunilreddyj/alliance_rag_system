@@ -31,12 +31,11 @@ services:
       - key: ALLOWED_EMAILS
         sync: false
 
-      # Point both paths to the mounted disk
-      - key: CHROMA_DB_PATH
-        value: /data/chroma_multi_store
-
-      - key: UPLOAD_DIR
-        value: /data/uploads
+      # CHROMA_DB_PATH and UPLOAD_DIR are intentionally omitted here.
+      # On free tier they default to the project directory (no disk needed).
+      # On a paid plan with a disk mounted at /data, add them manually:
+      #   CHROMA_DB_PATH = /data/chroma_multi_store
+      #   UPLOAD_DIR     = /data/uploads
 
   # ── Frontend ─────────────────────────────────────────────────────────────
   - type: web
