@@ -8,10 +8,11 @@ pydantic
 # Auth
 pyjwt
 
-# Vector DB
+# Vector DB & Embeddings
 chromadb
+sentence-transformers
 
-# LLM + Embeddings (OpenAI only — no local model needed)
+# LLM
 openai
 
 # Text processing

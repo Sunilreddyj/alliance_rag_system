@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Alliance Fees & Policy Chatbot</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { font-family: 'Segoe UI', sans-serif; }
+    .chat-box { height: calc(100vh - 180px); }
+    .dot { animation: bounce 1.2s infinite; }
+    .dot:nth-child(2) { animation-delay:.2s }
+    .dot:nth-child(3) { animation-delay:.4s }
+    @keyframes bounce { 0%,80%,100%{transform:translateY(0)} 40%{transform:translateY(-6px)} }
+    .msg { animation: fadeIn .25s ease-out; }
+    @keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+    ::-webkit-scrollbar{width:5px} ::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:3px}
+  </style>
+</head>
+<body class="bg-gray-100 flex h-screen overflow-hidden">
+
+  <!-- Sidebar -->
+  <aside class="w-56 bg-gray-900 text-white flex flex-col shrink-0">
+    <div class="px-4 py-5 border-b border-gray-700">
+      <h1 class="font-bold text-sm leading-tight">Alliance Fees &amp;<br>Policy Chatbot</h1>
+    </div>
+    <div class="px-3 pt-3">
+      <button onclick="newChat()" class="w-full bg-blue-600 hover:bg-blue-500 text-xs font-semibold py-2 rounded-lg transition">+ New Chat</button>
+    </div>
+    <div id="history" class="flex-1 overflow-y-auto px-3 py-2 space-y-1 text-xs"></div>
+    <div class="px-3 py-3 border-t border-gray-700 space-y-1">
+      <a href="/admin" class="flex items-center gap-2 px-3 py-2 text-gray-300 hover:bg-gray-800 rounded-lg text-xs transition">
+        &#x1F6E1; Admin Panel
+      </a>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <div class="flex flex-col flex-1 overflow-hidden">
+    <!-- Header -->
+    <header class="bg-white border-b px-6 py-3 flex items-center gap-2 text-sm font-semibold text-gray-800">
+      &#x2728; <span id="chat-title">New conversation</span>
+    </header>
+
+    <!-- Messages -->
+    <div id="messages" class="chat-box overflow-y-auto px-4 py-5 space-y-4 flex-1">
+      <!-- Welcome -->
+      <div class="msg flex gap-3 items-start">
+        <div class="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center text-white text-xs shrink-0">AI</div>
+        <div class="bg-white border rounded-2xl rounded-tl-sm px-4 py-3 max-w-xl text-sm text-gray-800 shadow-sm">
+          Hello! I'm the <strong>Alliance Fees &amp; Policy Chatbot</strong>. Ask me anything about fees, admissions, courses, or policies.
+        </div>
+      </div>
+    </div>
+
+    <!-- Suggestions -->
+    <div id="suggestions" class="px-4 pb-2 flex flex-wrap gap-2 justify-center">
+      <button onclick="suggest(this)" class="text-xs bg-white border border-gray-200 text-gray-600 px-3 py-1.5 rounded-full hover:border-blue-400 hover:text-blue-600 transition">What are the admission criteria?</button>
+      <button onclick="suggest(this)" class="text-xs bg-white border border-gray-200 text-gray-600 px-3 py-1.5 rounded-full hover:border-blue-400 hover:text-blue-600 transition">Tell me about fee structure</button>
+      <button onclick="suggest(this)" class="text-xs bg-white border border-gray-200 text-gray-600 px-3 py-1.5 rounded-full hover:border-blue-400 hover:text-blue-600 transition">What courses are available?</button>
+      <button onclick="suggest(this)" class="text-xs bg-white border border-gray-200 text-gray-600 px-3 py-1.5 rounded-full hover:border-blue-400 hover:text-blue-600 transition">What are the hostel facilities?</button>
+    </div>
+
+    <!-- Input -->
+    <div class="px-4 pb-5 pt-1">
+      <div class="flex items-end gap-2 bg-white border border-gray-200 rounded-2xl px-4 py-2 shadow-sm focus-within:ring-2 focus-within:ring-blue-400">
+        <textarea id="input" rows="1" placeholder="Ask about fees, admissions, courses…"
+          class="flex-1 bg-transparent text-sm text-gray-900 placeholder-gray-400 resize-none focus:outline-none max-h-36 py-1.5"
+          onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMsg()}"
+          oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea>
+        <button onclick="sendMsg()" class="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-xl transition shrink-0">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        </button>
+      </div>
+      <p class="text-xs text-center text-gray-400 mt-1.5">Answers are based on indexed documents only.</p>
+    </div>
+  </div>
+
+<script>
+  let loading = false;
+
+  function scrollBottom() {
+    const m = document.getElementById('messages');
+    m.scrollTop = m.scrollHeight;
+  }
+
+  function suggest(btn) {
+    document.getElementById('input').value = btn.textContent.trim();
+    document.getElementById('suggestions').style.display = 'none';
+    sendMsg();
+  }
+
+  function newChat() {
+    document.getElementById('messages').innerHTML = `
+      <div class="msg flex gap-3 items-start">
+        <div class="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center text-white text-xs shrink-0">AI</div>
+        <div class="bg-white border rounded-2xl rounded-tl-sm px-4 py-3 max-w-xl text-sm text-gray-800 shadow-sm">
+          Hello! I'm the <strong>Alliance Fees &amp; Policy Chatbot</strong>. Ask me anything about fees, admissions, courses, or policies.
+        </div>
+      </div>`;
+    document.getElementById('chat-title').textContent = 'New conversation';
+    document.getElementById('suggestions').style.display = 'flex';
+    document.getElementById('input').value = '';
+  }
+
+  function addMessage(role, text, sources) {
+    const wrap = document.getElementById('messages');
+    const isUser = role === 'user';
+    const div = document.createElement('div');
+    div.className = `msg flex gap-3 items-start ${isUser ? 'flex-row-reverse' : ''}`;
+
+    div.innerHTML = `
+      <div class="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs shrink-0 ${isUser ? 'bg-blue-600' : 'bg-gray-700'}">${isUser ? 'You' : 'AI'}</div>
+      <div class="max-w-xl flex flex-col gap-1">
+        <div class="${isUser ? 'bg-blue-600 text-white rounded-2xl rounded-tr-sm' : 'bg-white border rounded-2xl rounded-tl-sm text-gray-800 shadow-sm'} px-4 py-3 text-sm whitespace-pre-wrap">${escHtml(text)}</div>
+      </div>`;
+    wrap.appendChild(div);
+    scrollBottom();
+  }
+
+  function addTyping() {
+    const wrap = document.getElementById('messages');
+    const div = document.createElement('div');
+    div.id = 'typing';
+    div.className = 'msg flex gap-3 items-start';
+    div.innerHTML = `
+      <div class="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center text-white text-xs shrink-0">AI</div>
+      <div class="bg-white border rounded-2xl rounded-tl-sm px-4 py-3 shadow-sm flex items-center gap-1">
+        <span class="dot w-2 h-2 bg-gray-400 rounded-full inline-block"></span>
+        <span class="dot w-2 h-2 bg-gray-400 rounded-full inline-block"></span>
+        <span class="dot w-2 h-2 bg-gray-400 rounded-full inline-block"></span>
+      </div>`;
+    wrap.appendChild(div);
+    scrollBottom();
+  }
+
+  function removeTyping() {
+    const t = document.getElementById('typing');
+    if (t) t.remove();
+  }
+
+  function escHtml(t) {
+    return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  async function sendMsg() {
+    const input = document.getElementById('input');
+    const q = input.value.trim();
+    if (!q || loading) return;
+    loading = true;
+    input.value = '';
+    input.style.height = 'auto';
+    document.getElementById('suggestions').style.display = 'none';
+
+    const title = document.getElementById('chat-title');
+    if (title.textContent === 'New conversation') title.textContent = q.slice(0, 40);
+
+    addMessage('user', q, []);
+    addTyping();
+
+    try {
+      const res = await fetch('/api/query', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({query: q})
+      });
+      const data = await res.json();
+      removeTyping();
+      addMessage('assistant', data.answer || data.detail || 'No answer returned.', data.sources || []);
+    } catch(e) {
+      removeTyping();
+      addMessage('assistant', 'Error connecting to server. Make sure the backend is running.', []);
+    }
+    loading = false;
+  }
+</script>
+</body>
+</html>

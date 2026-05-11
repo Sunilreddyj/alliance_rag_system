@@ -1,16 +1,16 @@
 import chromadb
-from sentence_transformers import SentenceTransformer
-from config import CHROMA_DB_PATH, EMBED_MODEL, PDF_COLLECTION, EXCEL_COLLECTION, WEBSITE_COLLECTION
+from openai import OpenAI
+from config import CHROMA_DB_PATH, EMBED_MODEL, OPENAI_API_KEY, PDF_COLLECTION, EXCEL_COLLECTION, WEBSITE_COLLECTION
 
-_embed_model = None
+_openai_client = None
 _chroma_client = None
 
 
-def get_embed_model():
-    global _embed_model
-    if _embed_model is None:
-        _embed_model = SentenceTransformer(EMBED_MODEL)
-    return _embed_model
+def get_openai():
+    global _openai_client
+    if _openai_client is None:
+        _openai_client = OpenAI(api_key=OPENAI_API_KEY)
+    return _openai_client
 
 
 def get_client():
@@ -25,11 +25,13 @@ def get_collection(name: str):
 
 
 def embed_text(text: str) -> list:
-    return get_embed_model().encode(text).tolist()
+    response = get_openai().embeddings.create(model=EMBED_MODEL, input=text)
+    return response.data[0].embedding
 
 
 def embed_texts(texts: list) -> list:
-    return get_embed_model().encode(texts).tolist()
+    response = get_openai().embeddings.create(model=EMBED_MODEL, input=texts)
+    return [d.embedding for d in response.data]
 
 
 def collection_stats() -> dict:

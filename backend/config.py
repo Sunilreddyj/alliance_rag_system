@@ -25,7 +25,7 @@ def _resolve_dir(env_key, default):
 CHROMA_DB_PATH = _resolve_dir("CHROMA_DB_PATH", os.path.join(BASE_DIR, "chroma_multi_store"))
 UPLOAD_DIR     = _resolve_dir("UPLOAD_DIR",      os.path.join(BASE_DIR, "uploads"))
 
-EMBED_MODEL = "mixedbread-ai/mxbai-embed-large-v1"
+EMBED_MODEL = "text-embedding-3-small"
 LLM_MODEL = "gpt-4o-mini"
 CHUNK_SIZE = 600
 CHUNK_OVERLAP = 120

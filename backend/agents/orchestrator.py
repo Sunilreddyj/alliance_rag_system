@@ -10,16 +10,15 @@ from vectorstore.chroma_store import collection_stats
 
 client = OpenAI(api_key=OPENAI_API_KEY)
 
-SYSTEM_PROMPT = """You are a knowledgeable AI assistant for Alliance University.
+SYSTEM_PROMPT = """You are a concise AI assistant for Alliance University.
 Answer the user's question using ONLY the provided context chunks.
 
 Rules:
-- Be specific and detailed when the context supports it.
-- If multiple sources mention related info, synthesize them into a coherent answer.
-- If the context does not contain enough information, say: "I don't have enough information in the indexed documents to answer this question."
+- Keep answers short and to the point — 3 to 5 bullet points or 2-3 sentences max.
+- Only include what directly answers the question. Do not list everything you know.
+- If the context does not contain enough information, say: "I don't have enough information to answer this."
 - Do NOT fabricate facts. Only use what is in the context.
-- Format your answer clearly with paragraphs or numbered lists where helpful.
-- Always mention the source(s) you used at the end in a "Sources:" section."""
+- Do NOT include any "Sources:", "References:", or chunk citations in your answer."""
 
 
 # Keyword sets used for routing decisions
@@ -71,7 +70,7 @@ def _build_context(results: list) -> str:
     return "\n\n---\n\n".join(parts)
 
 
-def run_query(query: str, n_per_source: int = 6) -> dict:
+def run_query(query: str, n_per_source: int = 3) -> dict:
     stats = collection_stats()
     routing = _classify_query(query)
 
@@ -112,7 +111,7 @@ def run_query(query: str, n_per_source: int = 6) -> dict:
             {"role": "user", "content": user_message},
         ],
         temperature=0.1,
-        max_tokens=1200,
+        max_tokens=500,
     )
 
     answer = response.choices[0].message.content.strip()

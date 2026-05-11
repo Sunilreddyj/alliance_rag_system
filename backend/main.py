@@ -6,10 +6,13 @@ sys.path.insert(0, os.path.dirname(__file__))
 
 from fastapi import FastAPI, UploadFile, File, Depends, HTTPException, Form
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from typing import Optional
 import shutil
+
+STATIC_DIR = os.path.join(os.path.dirname(__file__), "static")
 
 from auth import authenticate_admin, verify_token
 from agents.orchestrator import run_query
@@ -28,6 +31,15 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Serve static HTML files
+@app.get("/", include_in_schema=False)
+def serve_chat():
+    return FileResponse(os.path.join(STATIC_DIR, "index.html"))
+
+@app.get("/admin", include_in_schema=False)
+def serve_admin():
+    return FileResponse(os.path.join(STATIC_DIR, "admin.html"))
 
 
 # ── Auth ──────────────────────────────────────────────────────────────────────
@@ -177,5 +189,5 @@ def health():
 
 if __name__ == "__main__":
     import uvicorn
-    port = int(os.environ.get("PORT", 8000))
+    port = int(os.environ.get("PORT", 9050))
     uvicorn.run("main:app", host="0.0.0.0", port=port, reload=True)

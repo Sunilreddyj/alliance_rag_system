@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Panel — Alliance Chatbot</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { font-family: 'Segoe UI', sans-serif; }
+    ::-webkit-scrollbar{width:5px} ::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:3px}
+  </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+
+  <!-- Login Screen -->
+  <div id="login-screen" class="min-h-screen bg-gradient-to-br from-blue-900 to-blue-700 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-sm">
+      <div class="flex flex-col items-center mb-6">
+        <div class="bg-blue-100 p-3 rounded-full mb-3 text-2xl">&#x1F512;</div>
+        <h1 class="text-2xl font-bold text-gray-900">Admin Login</h1>
+        <p class="text-gray-500 text-sm mt-1">Alliance Fees &amp; Policy Chatbot</p>
+      </div>
+      <div class="space-y-4">
+        <input id="pwd-input" type="password" placeholder="Enter admin password"
+          class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          onkeydown="if(event.key==='Enter')login()"/>
+        <div id="login-error" class="hidden text-red-600 text-sm bg-red-50 border border-red-200 rounded-lg px-3 py-2"></div>
+        <button onclick="login()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-lg transition">
+          Sign In
+        </button>
+      </div>
+      <p class="text-center mt-4 text-sm"><a href="/" class="text-blue-600 hover:underline">Back to Chat</a></p>
+    </div>
+  </div>
+
+  <!-- Admin Panel (hidden until logged in) -->
+  <div id="admin-panel" class="hidden">
+    <!-- Topbar -->
+    <header class="bg-white border-b px-6 py-3 flex items-center justify-between sticky top-0 z-10">
+      <div class="flex items-center gap-2 font-bold text-gray-900">&#x1F6E1; Admin Panel</div>
+      <div class="flex items-center gap-3 text-sm">
+        <button onclick="loadAll()" class="text-gray-500 hover:text-gray-800">&#x21BA; Refresh</button>
+        <a href="/" class="text-blue-600 hover:underline">Chat</a>
+        <button onclick="logout()" class="text-red-500 hover:text-red-700 font-medium">Logout</button>
+      </div>
+    </header>
+
+    <div class="max-w-3xl mx-auto px-4 py-6 space-y-5">
+
+      <!-- Stats -->
+      <div class="grid grid-cols-3 gap-4">
+        <div class="bg-white rounded-xl border p-4 text-center">
+          <p id="stat-pdf" class="text-3xl font-bold text-blue-600">—</p>
+          <p class="text-xs text-gray-500 mt-1">PDF Chunks</p>
+        </div>
+        <div class="bg-white rounded-xl border p-4 text-center">
+          <p id="stat-excel" class="text-3xl font-bold text-green-600">—</p>
+          <p class="text-xs text-gray-500 mt-1">Excel Chunks</p>
+        </div>
+        <div class="bg-white rounded-xl border p-4 text-center">
+          <p id="stat-web" class="text-3xl font-bold text-purple-600">—</p>
+          <p class="text-xs text-gray-500 mt-1">Website Chunks</p>
+        </div>
+      </div>
+
+      <!-- Activity log -->
+      <div id="log" class="space-y-1"></div>
+
+      <!-- PDF Section -->
+      <div class="bg-white rounded-xl border overflow-hidden">
+        <div class="px-5 py-4 font-semibold text-gray-800 border-b flex items-center gap-2">&#x1F4C4; PDF Documents</div>
+        <div class="px-5 py-4 space-y-3">
+          <div class="flex gap-2">
+            <label class="cursor-pointer bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition">
+              &#x2B06; Upload PDFs
+              <input type="file" accept=".pdf" multiple class="hidden" onchange="uploadFiles(this,'pdf')"/>
+            </label>
+            <button onclick="clearCol('pdf')" class="text-sm text-red-500 hover:text-red-700 border border-red-200 px-3 py-2 rounded-lg transition">Clear all</button>
+          </div>
+          <ul id="pdf-list" class="text-sm text-gray-500 divide-y"></ul>
+        </div>
+      </div>
+
+      <!-- Excel Section -->
+      <div class="bg-white rounded-xl border overflow-hidden">
+        <div class="px-5 py-4 font-semibold text-gray-800 border-b flex items-center gap-2">&#x1F4CA; Excel / CSV Files</div>
+        <div class="px-5 py-4 space-y-3">
+          <div class="flex gap-2">
+            <label class="cursor-pointer bg-green-600 hover:bg-green-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition">
+              &#x2B06; Upload Excel / CSV
+              <input type="file" accept=".xlsx,.xls,.csv" multiple class="hidden" onchange="uploadFiles(this,'excel')"/>
+            </label>
+            <button onclick="clearCol('excel')" class="text-sm text-red-500 hover:text-red-700 border border-red-200 px-3 py-2 rounded-lg transition">Clear all</button>
+          </div>
+          <ul id="excel-list" class="text-sm text-gray-500 divide-y"></ul>
+        </div>
+      </div>
+
+      <!-- Website Section -->
+      <div class="bg-white rounded-xl border overflow-hidden">
+        <div class="px-5 py-4 font-semibold text-gray-800 border-b flex items-center gap-2">&#x1F310; Websites</div>
+        <div class="px-5 py-4 space-y-3">
+          <div class="flex gap-2">
+            <input id="url-input" type="url" placeholder="https://example.com/page"
+              class="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+              onkeydown="if(event.key==='Enter')indexWebsite()"/>
+            <button onclick="indexWebsite()" class="bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition">Index</button>
+          </div>
+          <label class="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+            <input type="checkbox" id="include-pdfs" checked class="rounded"/> Also index linked PDFs
+          </label>
+          <button onclick="clearCol('website')" class="text-sm text-red-500 hover:text-red-700 border border-red-200 px-3 py-2 rounded-lg transition">Clear all websites</button>
+          <ul id="web-list" class="text-sm text-gray-500 divide-y"></ul>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+<script>
+  let token = localStorage.getItem('admin_token');
+  if (token) showPanel();
+
+  function showPanel() {
+    document.getElementById('login-screen').classList.add('hidden');
+    document.getElementById('admin-panel').classList.remove('hidden');
+    loadAll();
+  }
+
+  async function login() {
+    const pwd = document.getElementById('pwd-input').value;
+    try {
+      const res = await fetch('/api/admin/login', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({password: pwd})
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || 'Login failed');
+      token = data.token;
+      localStorage.setItem('admin_token', token);
+      showPanel();
+    } catch(e) {
+      const el = document.getElementById('login-error');
+      el.textContent = e.message;
+      el.classList.remove('hidden');
+    }
+  }
+
+  function logout() {
+    localStorage.removeItem('admin_token');
+    token = null;
+    document.getElementById('login-screen').classList.remove('hidden');
+    document.getElementById('admin-panel').classList.add('hidden');
+  }
+
+  function authHeaders() {
+    return {'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json'};
+  }
+
+  function log(type, msg) {
+    const el = document.getElementById('log');
+    const div = document.createElement('div');
+    div.className = `text-xs px-3 py-2 rounded-lg ${type==='error'?'bg-red-50 text-red-700 border border-red-200':'bg-green-50 text-green-700 border border-green-200'}`;
+    div.textContent = msg;
+    el.prepend(div);
+    if (el.children.length > 8) el.lastChild.remove();
+  }
+
+  async function loadAll() {
+    try {
+      const [stats, pdfs, excels, webs] = await Promise.all([
+        fetch('/api/admin/stats', {headers: authHeaders()}).then(r=>r.json()),
+        fetch('/api/admin/pdfs',  {headers: authHeaders()}).then(r=>r.json()),
+        fetch('/api/admin/excels',{headers: authHeaders()}).then(r=>r.json()),
+        fetch('/api/admin/websites',{headers: authHeaders()}).then(r=>r.json()),
+      ]);
+      document.getElementById('stat-pdf').textContent   = stats.pdf_documents   ?? 0;
+      document.getElementById('stat-excel').textContent = stats.excel_documents  ?? 0;
+      document.getElementById('stat-web').textContent   = stats.website_documents?? 0;
+      renderList('pdf-list',   pdfs.files  || [], f => deleteFile('pdf', f));
+      renderList('excel-list', excels.files|| [], f => deleteFile('excel', f));
+      renderWebList(webs.sites || []);
+    } catch(e) { log('error', 'Failed to load data: ' + e.message); }
+  }
+
+  function renderList(id, items, onDelete) {
+    const ul = document.getElementById(id);
+    ul.innerHTML = items.length ? items.map(f => `
+      <li class="flex items-center justify-between py-2">
+        <span class="truncate text-gray-700">${f}</span>
+        <button onclick="(${onDelete.toString()})('${f.replace(/'/g,"\\'")}')
+" class="text-red-400 hover:text-red-600 ml-2 text-xs">&#x1F5D1;</button>
+      </li>`).join('') : '<li class="py-2 text-gray-400">Nothing indexed yet.</li>';
+  }
+
+  function renderWebList(sites) {
+    const ul = document.getElementById('web-list');
+    ul.innerHTML = sites.length ? sites.map(s => `
+      <li class="flex items-center justify-between py-2">
+        <span class="truncate text-gray-700 text-xs">${s.url}</span>
+        <button onclick="deleteWebsite('${s.url.replace(/'/g,"\\'")}')
+" class="text-red-400 hover:text-red-600 ml-2 text-xs">&#x1F5D1;</button>
+      </li>`).join('') : '<li class="py-2 text-gray-400">Nothing indexed yet.</li>';
+  }
+
+  async function uploadFiles(input, type) {
+    const files = Array.from(input.files);
+    for (const file of files) {
+      const form = new FormData();
+      form.append('file', file);
+      try {
+        const res = await fetch(`/api/admin/upload-${type}`, {
+          method:'POST', headers:{'Authorization':`Bearer ${token}`}, body: form
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail);
+
+        if (data.status === 'error') {
+          log('error', `${data.filename}: ${data.reason}`);
+        } else if (data.status === 'skipped') {
+          log('error', `${data.filename}: Skipped — ${data.reason}`);
+        } else {
+          log('ok', `${data.filename}: ${data.chunks} chunks indexed successfully`);
+        }
+      } catch(e) { log('error', `Upload failed: ${e.message}`); }
+    }
+    input.value = '';
+    loadAll();
+  }
+
+  async function indexWebsite() {
+    const url = document.getElementById('url-input').value.trim();
+    if (!url) return;
+    const incPdfs = document.getElementById('include-pdfs').checked;
+    log('ok', `Indexing ${url}…`);
+    try {
+      const res = await fetch('/api/admin/index-website', {
+        method:'POST', headers: authHeaders(),
+        body: JSON.stringify({url, include_pdfs: incPdfs})
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail);
+      log('ok', `${url}: ${data.page_chunks} page chunks + ${data.pdf_chunks} PDF chunks`);
+      document.getElementById('url-input').value = '';
+    } catch(e) { log('error', `Failed: ${e.message}`); }
+    loadAll();
+  }
+
+  async function deleteFile(type, name) {
+    if (!confirm(`Delete "${name}"?`)) return;
+    try {
+      await fetch(`/api/admin/${type}/${encodeURIComponent(name)}`, {
+        method:'DELETE', headers: authHeaders()
+      });
+      log('ok', `Deleted: ${name}`);
+      loadAll();
+    } catch(e) { log('error', 'Delete failed'); }
+  }
+
+  async function deleteWebsite(url) {
+    if (!confirm(`Remove "${url}"?`)) return;
+    try {
+      await fetch(`/api/admin/website?url=${encodeURIComponent(url)}`, {
+        method:'DELETE', headers: authHeaders()
+      });
+      log('ok', `Removed: ${url}`);
+      loadAll();
+    } catch(e) { log('error', 'Delete failed'); }
+  }
+
+  async function clearCol(name) {
+    if (!confirm(`Clear ALL ${name} data?`)) return;
+    try {
+      const res = await fetch(`/api/admin/clear/${name}`, {
+        method:'DELETE', headers: authHeaders()
+      });
+      const data = await res.json();
+      log('ok', `Cleared ${name}: ${data.chunks_removed} chunks removed`);
+      loadAll();
+    } catch(e) { log('error', 'Clear failed'); }
+  }
+</script>
+</body>
+</html>

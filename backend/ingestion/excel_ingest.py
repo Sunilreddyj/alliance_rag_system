@@ -10,6 +10,8 @@ def extract_text_from_excel(file_path: str) -> str:
     ext = os.path.splitext(file_path)[1].lower()
     if ext == ".csv":
         df_map = {"Sheet1": pd.read_csv(file_path)}
+    elif ext == ".xls":
+        df_map = pd.read_excel(file_path, sheet_name=None, engine="xlrd")
     else:
         df_map = pd.read_excel(file_path, sheet_name=None, engine="openpyxl")
 
